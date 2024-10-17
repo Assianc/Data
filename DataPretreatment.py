@@ -526,6 +526,7 @@ def RFM_Customer_(data):
     save_fig('customer_segmentation')
     plt.show()
 
+
 # 延迟交货订单
 def plot_late_delivery_analysis(data):
     # 过滤具有延迟交货风险的订单
