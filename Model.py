@@ -1,4 +1,8 @@
 from tqdm import tqdm
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+import xgboost as xgb
 import pandas as pd
 import numpy as np
 import xgboost as xgb
@@ -15,10 +19,13 @@ from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.pipeline import Pipeline
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc
+
+from DataPretreatment import save_fig
 
 # 隐藏警告
 warnings.filterwarnings('ignore')
-
 
 # 加载数据集
 def load_data(file_path):
@@ -96,7 +103,7 @@ def standardize_data(X_train, X_test):
     return X_train, X_test
 
 
-# 评估模型性能
+# 评估模型性能并绘制ROC曲线
 def evaluate_model(model, X_train, X_test, y_train, y_test, target_name):
     with tqdm(total=1, desc=f"Training {model.__class__.__name__}") as pbar:
         model.fit(X_train, y_train)
@@ -104,6 +111,28 @@ def evaluate_model(model, X_train, X_test, y_train, y_test, target_name):
 
     with tqdm(total=1, desc=f"Evaluating {model.__class__.__name__}") as pbar:
         y_pred = model.predict(X_test)
+        y_pred_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
+
+        # 计算AUC和ROC曲线
+        if y_pred_prob is not None:
+            fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
+            roc_auc = auc(fpr, tpr)
+
+            # 绘制ROC曲线
+            plt.figure()
+            plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title(f'ROC Curve ({model.__class__.__name__} - {target_name})')
+            plt.legend(loc="lower right")
+            save_fig(f"ROC_Curve_{model.__class__.__name__}_{target_name}.png", "Roc")
+            plt.show()
+        else:
+            roc_auc = "N/A"
+
         accuracy = accuracy_score(y_test, y_pred)
         recall = recall_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred)
@@ -113,46 +142,94 @@ def evaluate_model(model, X_train, X_test, y_train, y_test, target_name):
         print(f"Accuracy ({target_name}): {accuracy * 100:.2f}%")
         print(f"Recall ({target_name}): {recall * 100:.2f}%")
         print(f"F1 Score ({target_name}): {f1 * 100:.2f}%")
+        print(f"AUC ({target_name}): {roc_auc}")
         print(f"Confusion Matrix ({target_name}):\n{conf_matrix}\n")
 
         pbar.update(1)
 
-    return accuracy, recall, f1
+    return accuracy, recall, f1, roc_auc
 
+# 评估回归模型性能
+def evaluate_regression_model(model, X_train, X_test, y_train, y_test, target_name):
+    with tqdm(total=1, desc=f"Training {model.__class__.__name__}") as pbar:
+        model.fit(X_train, y_train)
+        pbar.update(1)
+
+    with tqdm(total=1, desc=f"Evaluating {model.__class__.__name__}") as pbar:
+        y_pred = model.predict(X_test)
+
+        # 计算回归评估指标
+        mse = mean_squared_error(y_test, y_pred)
+        rmse = np.sqrt(mse)
+        r2 = r2_score(y_test, y_pred)
+
+        print(f"Model: {model.__class__.__name__}")
+        print(f"Mean Squared Error ({target_name}): {mse:.2f}")
+        print(f"Root Mean Squared Error ({target_name}): {rmse:.2f}")
+        print(f"R² ({target_name}): {r2:.2f}\n")
+
+        pbar.update(1)
+
+    return mse, rmse, r2
+
+# 执行多个回归模型并比较
+def run_order_quantity_regression(X_train, X_test, y_train, y_test):
+    models = [LinearRegression(),
+              RandomForestRegressor(),
+              xgb.XGBRegressor()]
+
+    results = []
+    for model in tqdm(models, desc="Running order quantity prediction models"):
+        mse, rmse, r2 = evaluate_regression_model(model, X_train, X_test, y_train, y_test, "Order Quantity")
+
+        results.append({
+            "Model": model.__class__.__name__,
+            "MSE": mse,
+            "RMSE": rmse,
+            "R²": r2
+        })
+
+    results_df = pd.DataFrame(results)
+    results_df.to_csv("order_quantity_model_results.csv", index=False)
+
+    return results_df
 
 # 执行多个模型并比较
 def run_models(X_train_f, X_test_f, y_train_f, y_test_f, X_train_l, X_test_l, y_train_l, y_test_l):
     models = [LogisticRegression(solver='lbfgs'),
-              GaussianNB(),
-              LinearSVC(),
-              KNeighborsClassifier(n_neighbors=1),
-              LinearDiscriminantAnalysis(),
+              # GaussianNB(),
+              # LinearSVC(),
+              # KNeighborsClassifier(n_neighbors=1),
+              # LinearDiscriminantAnalysis(),
               RandomForestClassifier(),
-              ExtraTreesClassifier(),
-              xgb.XGBClassifier(),
+              # ExtraTreesClassifier(),
+              # xgb.XGBClassifier(),
               DecisionTreeClassifier()]
 
     results = []
     for model in tqdm(models, desc="Running models"):
         print(f"Evaluating {model.__class__.__name__} for fraud detection...")
-        acc_f, recall_f, f1_f = evaluate_model(model, X_train_f, X_test_f, y_train_f, y_test_f, "fraud")
+        acc_f, recall_f, f1_f, auc_f = evaluate_model(model, X_train_f, X_test_f, y_train_f, y_test_f, "fraud")
 
         print(f"Evaluating {model.__class__.__name__} for late delivery prediction...")
-        acc_l, recall_l, f1_l = evaluate_model(model, X_train_l, X_test_l, y_train_l, y_test_l, "late_delivery")
+        acc_l, recall_l, f1_l, auc_l = evaluate_model(model, X_train_l, X_test_l, y_train_l, y_test_l, "late_delivery")
 
         results.append({
             "Model": model.__class__.__name__,
             "Fraud Detection Accuracy": acc_f,
             "Fraud Detection Recall": recall_f,
             "Fraud Detection F1": f1_f,
+            "Fraud Detection AUC": auc_f,
             "Late Delivery Accuracy": acc_l,
             "Late Delivery Recall": recall_l,
-            "Late Delivery F1": f1_l
+            "Late Delivery F1": f1_l,
+            "Late Delivery AUC": auc_l
         })
 
-    # 将结果保存为txt文件
+    # 将结果保存csv文件
     results_df = pd.DataFrame(results)
-    results_df.to_csv("model_results.txt", sep='\t', index=False)
+    results_df.to_csv("model_results.csv", index=False)
+
     return results_df
 
 
@@ -172,6 +249,14 @@ def main():
 
     # 运行并评估模型
     results = run_models(X_train_f, X_test_f, y_train_f, y_test_f, X_train_l, X_test_l, y_train_l, y_test_l)
+    print(results)
+
+    # 订单量预测数据集划分和标准化
+    X_train_q, X_test_q, y_train_q, y_test_q = split_data(processed_data, 'Order Item Quantity')
+    X_train_q, X_test_q = standardize_data(X_train_q, X_test_q)
+
+    # 运行并评估回归模型
+    results = run_order_quantity_regression(X_train_q, X_test_q, y_train_q, y_test_q)
     print(results)
 
 

@@ -4,6 +4,7 @@ import pandas as pd
 import datetime as dt
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 # 设置中文字体
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 使用黑体
 plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
@@ -619,48 +620,47 @@ def main():
     dataset = load_data(filepath)
     data = clean_data(dataset)
 
-    # 热图可视化
-    plot_heatmap(data)
-
-    # 销售分析
-    plot_sales_by_market_and_region(data)
-
-    # 支付方式分析
-    plot_payment_type_analysis(data)
-
-    # 损失分析
-    plot_loss_analysis(data)
-
-    # 欺诈检测
-    plot_fraud_analysis(data)
-
-    # 延迟交货分析
-    plot_late_delivery_droducts(data)
-
-    # 欺诈产品分析
-    plot_fraud_products_comparison(data)
-
-    # 欺诈客户分析
-    plot_top_suspected_fraud_customers(data)
-
-    # 延迟交货订单
-    plot_late_delivery_analysis(data)
-
-    # 运输方式
-    plot_transport_Shipping_Mode(data)
-
-    # 分析各类别的销售情况
-    category_sales_analysis(data)
-
-    # 分析产品价格与销售额的关系
-    price_sales_relationship(data)
-
-    # 分析订单时间趋势
-    time_trend_analysis(data)
-
-    # RFM客户订单分析
-    RFM_Customer_(data)
-
+    # # 热图可视化
+    # plot_heatmap(data)
+    #
+    # # 销售分析
+    # plot_sales_by_market_and_region(data)
+    #
+    # # 支付方式分析
+    # plot_payment_type_analysis(data)
+    #
+    # # 损失分析
+    # plot_loss_analysis(data)
+    #
+    # # 欺诈检测
+    # plot_fraud_analysis(data)
+    #
+    # # 延迟交货分析
+    # plot_late_delivery_droducts(data)
+    #
+    # # 欺诈产品分析
+    # plot_fraud_products_comparison(data)
+    #
+    # # 欺诈客户分析
+    # plot_top_suspected_fraud_customers(data)
+    #
+    # # 延迟交货订单
+    # plot_late_delivery_analysis(data)
+    #
+    # # 运输方式
+    # plot_transport_Shipping_Mode(data)
+    #
+    # # 分析各类别的销售情况
+    # category_sales_analysis(data)
+    #
+    # # 分析产品价格与销售额的关系
+    # price_sales_relationship(data)
+    #
+    # # 分析订单时间趋势
+    # time_trend_analysis(data)
+    #
+    # # RFM客户订单分析
+    # RFM_Customer_(data)
 
 if __name__ == "__main__":
     main()

@@ -166,8 +166,13 @@ data['Order Status'].unique()
 # 完成、待定、关闭、待付款、取消、处理、涉嫌欺诈、等待、付款审核
 
 #查看用于进行除转账以外的欺诈的付款类型
+
 xyz = data[(data['Type'] != 'TRANSFER')&(data['Order Status'] == 'SUSPECTED_FRAUD')]
 xyz['Order Region'].value_counts()
+plt.xlabel('Order Region')
+plt.ylabel('Count')
+plt.title('Frequency of Order Regions in Suspected Fraud Cases')
+plt.show()
 
 '''
 可以清楚地看到，没有欺诈进行借记，现金，付款方式，
