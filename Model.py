@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.pipeline import Pipeline
 import matplotlib.pyplot as plt
@@ -175,8 +175,14 @@ def evaluate_regression_model(model, X_train, X_test, y_train, y_test, target_na
 # 执行多个回归模型并比较
 def run_order_quantity_regression(X_train, X_test, y_train, y_test):
     models = [LinearRegression(),
-              RandomForestRegressor(),
-              xgb.XGBRegressor()]
+              # GaussianNB(),
+              # LinearSVC(),
+              # KNeighborsClassifier(n_neighbors=1),
+              # LinearDiscriminantAnalysis(),
+              RandomForestClassifier(),
+              # ExtraTreesClassifier(),
+              # xgb.XGBClassifier(),
+              DecisionTreeRegressor()]
 
     results = []
     for model in tqdm(models, desc="Running order quantity prediction models"):
@@ -204,7 +210,7 @@ def run_models(X_train_f, X_test_f, y_train_f, y_test_f, X_train_l, X_test_l, y_
               RandomForestClassifier(),
               # ExtraTreesClassifier(),
               # xgb.XGBClassifier(),
-              DecisionTreeClassifier()]
+              DecisionTreeRegressor()]
 
     results = []
     for model in tqdm(models, desc="Running models"):

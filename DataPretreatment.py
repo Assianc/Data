@@ -620,8 +620,8 @@ def main():
     dataset = load_data(filepath)
     data = clean_data(dataset)
 
-    # # 热图可视化
-    # plot_heatmap(data)
+    # 热图可视化
+    plot_heatmap(data)
     #
     # # 销售分析
     # plot_sales_by_market_and_region(data)
